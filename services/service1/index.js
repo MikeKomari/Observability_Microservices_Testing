@@ -1,19 +1,61 @@
 const express = require("express");
 const axios = require("axios");
+const { v4: uuidv4 } = require("uuid");
+const winston = require("winston");
 
 const app = express();
 const port = 3001;
 
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.json(),
+  transports: [new winston.transports.Console()],
+});
+
+// Middleware untuk menyisipkan trace_id
+app.use((req, res, next) => {
+  req.trace_id = uuidv4();
+  next();
+});
+
 app.get("/", async (req, res) => {
+  const trace_id = req.trace_id;
+  logger.info({
+    trace_id,
+    service: "service1",
+    action: "incoming_request",
+    message: "Received request, calling service2",
+  });
+
   try {
-    await axios.get("http://service-b:3002/hit-test");
+    const response = await axios.get("http://service2:3002/hit-test", {
+      headers: { "x-trace-id": trace_id },
+    });
+
+    logger.info({
+      trace_id,
+      service: "service1",
+      action: "service-b_response",
+      status: response.status,
+      data: response.data,
+    });
+
     res.send("Service 1 called Service 2");
   } catch (e) {
-    console.error("Error calling Service 2:", e.message);
-    res.status(500).send("Error");
+    logger.error({
+      trace_id,
+      service: "service1",
+      action: "error_calling_service-b",
+      error: e.message,
+    });
+    res.status(500).send("Error calling Service 2");
   }
 });
 
 app.listen(port, () => {
-  console.log(`Service 1 running on port ${port}`);
+  logger.info({
+    service: "service1",
+    action: "startup",
+    message: `Service 1 running on port ${port}`,
+  });
 });
