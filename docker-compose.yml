@@ -13,22 +13,22 @@ services:
     ports:
       - "3002:3002"
 
-  otel-collector:
-    image: otel/opentelemetry-collector:latest
-    volumes:
-      - ./otel-collector-config.yml:/etc/otel-collector-config.yml
-    command: ["--config=/etc/otel-collector-config.yml"]
-    ports:
-      - "4317:4317"
-      - "4318:4318"
-      - "9464:9464"
+  # otel-collector:
+  #   image: otel/opentelemetry-collector:latest
+  #   volumes:
+  #     - ./otel-collector-config.yml:/etc/otel-collector-config.yml
+  #   command: ["--config=/etc/otel-collector-config.yml"]
+  #   ports:
+  #     - "4317:4317"
+  #     - "4318:4318"
+  #     - "9464:9464"
 
-  prometheus:
-    image: prom/prometheus
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
+  # prometheus:
+  #   image: prom/prometheus
+  #   volumes:
+  #     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+  #   ports:
+  #     - "9090:9090"
 
   grafana:
     image: grafana/grafana
@@ -49,5 +49,5 @@ services:
     volumes:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./promtail-config.yml:/etc/promtail/promtail-config.yml
+      - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml
     command: -config.file=/etc/promtail/promtail-config.yml

@@ -6,22 +6,52 @@ const port = 3002;
 
 const logger = winston.createLogger({
   level: "info",
-  format: winston.format.json(),
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.printf(({ timestamp, level, message, ...meta }) => {
+      return {
+        timestamp,
+        level,
+        message,
+        ...meta,
+      };
+    })
+  ),
   transports: [new winston.transports.Console()],
 });
 
 app.get("/hit-test", (req, res) => {
   const trace_id = req.headers["x-trace-id"] || "not-traced";
+  const span_id = req.headers["x-span-id"] || "not-traced";
+  const caller = req.headers["caller"] || "unknown";
+
+  const isFail = Math.random() < 0.5; // 50% chance error (for simulation purposes)
+  if (isFail) {
+    const errorMessage = "akodwkokdw gagal coy";
+    logger.error({
+      message: errorMessage,
+      service: "service2",
+      operation: "handle_hit_test",
+      trace_id,
+      span_id,
+      caller: caller,
+      status_code: 500,
+      error_message: errorMessage,
+    });
+    return res.status(500).send("Service 2 error");
+  }
 
   logger.info({
-    trace_id,
+    message: "Handled API hit successfully",
     service: "service2",
-    action: "incoming_request",
-    message: "Received request from service1",
+    operation: "handle_hit_test",
+    trace_id,
+    span_id,
+    caller: caller,
+    status_code: 200,
   });
 
-  // Simulasi delay atau error di sini jika ingin
-  res.send("Hello from Service 2");
+  res.send("BERHASIL COYYYYYYYYY");
 });
 
 app.listen(port, () => {

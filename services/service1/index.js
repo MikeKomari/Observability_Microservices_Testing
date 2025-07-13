@@ -15,6 +15,7 @@ const logger = winston.createLogger({
 // Middleware untuk menyisipkan trace_id
 app.use((req, res, next) => {
   req.trace_id = uuidv4();
+  req.span_id = uuidv4();
   next();
 });
 
@@ -29,13 +30,17 @@ app.get("/", async (req, res) => {
 
   try {
     const response = await axios.get("http://service2:3002/hit-test", {
-      headers: { "x-trace-id": trace_id },
+      headers: {
+        "x-trace-id": trace_id,
+        "x-span-id": uuidv4(),
+        "x-caller-id": "service-a",
+      },
     });
 
     logger.info({
       trace_id,
       service: "service1",
-      action: "service-b_response",
+      action: "service2_response",
       status: response.status,
       data: response.data,
     });
@@ -45,7 +50,7 @@ app.get("/", async (req, res) => {
     logger.error({
       trace_id,
       service: "service1",
-      action: "error_calling_service-b",
+      action: "error_calling_service2",
       error: e.message,
     });
     res.status(500).send("Error calling Service 2");
